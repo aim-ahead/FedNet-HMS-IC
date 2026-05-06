@@ -8,6 +8,7 @@ if OBJECT_ID(N'AAFN_LabValueSummary', N'U') is not null drop table AAFN_LabValue
 -- Create new tables to save results
 
 create table AAFN_DiagnosisSummary (
+	SiteID varchar(20) not null,
 	ICD10Code varchar(50) not null,
 	FirstDate date,
 	LastDate date,
@@ -15,30 +16,33 @@ create table AAFN_DiagnosisSummary (
 	NumberOfPatients int,
 	NumberOfPatientsIn2025 int,
 	PatientsWithTwoPlusDiagDates int,
-	primary key (ICD10Code)
+	primary key (ICD10Code, SiteID)
 );
 
 create table AAFN_MedicationSummary (
+	SiteID varchar(20) not null,
 	RxNormCode varchar(50) not null,
 	FirstDate date,
 	LastDate date,
 	NumberOfFacts int,
 	NumberOfPatients int,
 	NumberOfPatientsIn2025 int,
-	primary key (RxNormCode)
+	primary key (RxNormCode, SiteID)
 );
 
 create table AAFN_LabSummary (
+	SiteID varchar(20) not null,
 	LoincCode varchar(50) not null,
 	FirstDate date,
 	LastDate date,
 	NumberOfFacts int,
 	NumberOfPatients int,
 	NumberOfPatientsIn2025 int,
-	primary key (LoincCode)
+	primary key (LoincCode, SiteID)
 );
 
 create table AAFN_LabValueSummary (
+	SiteID varchar(20) not null,
 	LoincCode varchar(50) not null,
 	LabUnits varchar(50) not null,
 	FirstDate date,
@@ -48,7 +52,7 @@ create table AAFN_LabValueSummary (
 	MaxValue numeric(18,5),
 	MeanValue numeric(18,5),
 	StDevValue numeric(18,5)
-	primary key (LoincCode, LabUnits)
+	primary key (LoincCode, LabUnits, SiteID)
 );
 
 
@@ -73,9 +77,10 @@ create table AAFN_LabValueSummary (
 	from Diagnosis
 	group by ICD10Code, PatientNum
 )
-insert into AAFN_DiagnosisSummary(ICD10Code, FirstDate, LastDate, NumberOfFacts, NumberOfPatients, NumberOfPatientsIn2025, PatientsWithTwoPlusDiagDates)
+insert into AAFN_DiagnosisSummary(SiteID, ICD10Code, FirstDate, LastDate, NumberOfFacts, NumberOfPatients, NumberOfPatientsIn2025, PatientsWithTwoPlusDiagDates)
 	-- Calculate counts for each diagnosis code; mask codes with fewer than 10 patients
-	select ICD10Code,
+	select 'YourSiteID' SiteID,
+		ICD10Code,
 		min(FirstDate) FirstDate,
 		max(LastDate) LastDate,
 		sum(NumberOfFacts) NumberOfFacts,
@@ -110,9 +115,10 @@ insert into AAFN_DiagnosisSummary(ICD10Code, FirstDate, LastDate, NumberOfFacts,
 	from Medication
 	group by RxNormCode, PatientNum
 )
-insert into AAFN_MedicationSummary(RxNormCode, FirstDate, LastDate, NumberOfFacts, NumberOfPatients, NumberOfPatientsIn2025)
+insert into AAFN_MedicationSummary(SiteID, RxNormCode, FirstDate, LastDate, NumberOfFacts, NumberOfPatients, NumberOfPatientsIn2025)
 	-- Calculate counts for each medication code; mask codes with fewer than 10 patients
-	select RxNormCode,
+	select 'YourSiteID' SiteID,
+		RxNormCode,
 		min(FirstDate) FirstDate,
 		max(LastDate) LastDate,
 		sum(NumberOfFacts) NumberOfFacts,
@@ -143,9 +149,10 @@ insert into AAFN_MedicationSummary(RxNormCode, FirstDate, LastDate, NumberOfFact
 	from Lab
 	group by LoincCode, PatientNum
 )
-insert into AAFN_LabSummary(LoincCode, FirstDate, LastDate, NumberOfFacts, NumberOfPatients, NumberOfPatientsIn2025)
+insert into AAFN_LabSummary(SiteID, LoincCode, FirstDate, LastDate, NumberOfFacts, NumberOfPatients, NumberOfPatientsIn2025)
 	-- Calculate counts for each lab code; mask codes with fewer than 10 patients
-	select LoincCode,
+	select 'YourSiteID' SiteID,
+		LoincCode,
 		min(FirstDate) FirstDate,
 		max(LastDate) LastDate,
 		sum(NumberOfFacts) NumberOfFacts,
@@ -169,9 +176,10 @@ insert into AAFN_LabSummary(LoincCode, FirstDate, LastDate, NumberOfFacts, Numbe
 	where concept_cd like 'LOINC:%'
 		and isnumeric(nval_num)=1
 )
-insert into AAFN_LabValueSummary(LoincCode, LabUnits, FirstDate, LastDate, NumberOfNumericResults, MinValue, MaxValue, MeanValue, StDevValue)
+insert into AAFN_LabValueSummary(SiteID, LoincCode, LabUnits, FirstDate, LastDate, NumberOfNumericResults, MinValue, MaxValue, MeanValue, StDevValue)
 	-- Calculate summary statistics on units and values for each lab code; mask code-unit pairs with fewer than 10 patients
-	select LoincCode,
+	select 'YourSiteID' SiteID,
+		LoincCode,
 		LabUnits,
 		min(StartDate) FirstDate,
 		max(StartDate) LastDate,
@@ -200,4 +208,3 @@ select * from AAFN_MedicationSummary order by RxNormCode;
 select * from AAFN_LabSummary order by LoincCode;
 select * from AAFN_LabValueSummary order by LoincCode,LabUnits;
 */
-
